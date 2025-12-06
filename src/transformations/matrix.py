@@ -5,8 +5,13 @@ Implementa álgebra linear para transformações homogêneas 3D
 
 import numpy as np
 import math
-from core.exceptions import SingularMatrixException
-from core.logger import get_logger
+
+try:
+    from core.exceptions import SingularMatrixException
+    from core.logger import get_logger
+except ImportError:
+    from ..core.exceptions import SingularMatrixException
+    from ..core.logger import get_logger
 
 logger = get_logger(__name__)
 

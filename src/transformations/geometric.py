@@ -7,8 +7,13 @@ from .matrix import Matrix4x4
 import math
 import numpy as np
 from typing import Tuple, List, Union
-from core.exceptions import TransformationException
-from core.logger import get_logger
+
+try:
+    from core.exceptions import TransformationException
+    from core.logger import get_logger
+except ImportError:
+    from ..core.exceptions import TransformationException
+    from ..core.logger import get_logger
 
 logger = get_logger(__name__)
 

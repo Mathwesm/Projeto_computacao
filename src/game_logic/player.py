@@ -7,7 +7,11 @@ import os
 from dataclasses import dataclass, field
 from typing import List, Dict
 from pathlib import Path
-from core.logger import get_logger
+
+try:
+    from core.logger import get_logger
+except ImportError:
+    from ..core.logger import get_logger
 
 logger = get_logger(__name__)
 

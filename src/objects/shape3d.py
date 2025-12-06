@@ -3,8 +3,13 @@ Classe base para objetos 3D
 """
 
 import numpy as np
-from core.logger import get_logger
-from core.exceptions import SingularMatrixException
+
+try:
+    from core.logger import get_logger
+    from core.exceptions import SingularMatrixException
+except ImportError:
+    from ..core.logger import get_logger
+    from ..core.exceptions import SingularMatrixException
 
 try:
     from ..transformations.geometric import GeometricTransformations
