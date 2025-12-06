@@ -3,11 +3,15 @@ Classe base para objetos 3D
 """
 
 import numpy as np
+from core.logger import get_logger
+from core.exceptions import SingularMatrixException
 
 try:
     from ..transformations.geometric import GeometricTransformations
 except ImportError:
     from transformations.geometric import GeometricTransformations
+
+logger = get_logger(__name__)
 
 
 class Shape3D:
@@ -31,6 +35,8 @@ class Shape3D:
 
         # Calcula normais
         self.normals = self._calculate_normals()
+        # Guarda normais originais para otimização
+        self.original_normals = np.array(self.normals, dtype=np.float32)
 
         # Propriedades do objeto
         self.name = "Shape3D"
@@ -66,13 +72,42 @@ class Shape3D:
         return normals
 
     def apply_transformations(self):
-        """Aplica as transformações acumuladas aos vértices"""
-        self.vertices = np.array([
-            self.transform.apply_to_point(v) for v in self.original_vertices
-        ], dtype=np.float32)
+        """
+        Aplica as transformações acumuladas aos vértices e normais
+        Otimizado: transforma normais diretamente ao invés de recalcular
+        """
+        # Transforma vértices usando multiplicação matricial (mais rápido)
+        transform_matrix = self.transform.matrix.data
 
-        # Recalcula normais após transformação
-        self.normals = self._calculate_normals()
+        # Adiciona coordenada homogênea (w=1) aos vértices
+        ones = np.ones((len(self.original_vertices), 1), dtype=np.float32)
+        vertices_homogeneous = np.hstack([self.original_vertices, ones])
+
+        # Aplica transformação (multiplicação matricial vetorizada)
+        transformed = (transform_matrix @ vertices_homogeneous.T).T
+        self.vertices = transformed[:, :3]  # Remove coordenada homogênea
+
+        # Transforma normais usando matriz normal (inverse-transpose)
+        # Para normais, usamos apenas a parte 3x3 da matriz
+        try:
+            # Matriz normal = inversa transposta da parte rotação/escala
+            rotation_scale = transform_matrix[:3, :3]
+            normal_matrix = np.linalg.inv(rotation_scale).T
+
+            # Aplica transformação às normais (mais rápido que recalcular)
+            transformed_normals = (normal_matrix @ self.original_normals.T).T
+
+            # Normaliza os vetores
+            norms = np.linalg.norm(transformed_normals, axis=1, keepdims=True)
+            norms[norms == 0] = 1  # Evita divisão por zero
+            self.normals = (transformed_normals / norms).tolist()
+
+            logger.debug(f"Transformações aplicadas com otimização (vetorizado)")
+
+        except np.linalg.LinAlgError:
+            # Se a matriz for singular, recalcula normais do zero
+            logger.warning("Matriz singular detectada, recalculando normais do zero")
+            self.normals = self._calculate_normals()
 
     def reset_transformations(self):
         """Reseta todas as transformações"""
