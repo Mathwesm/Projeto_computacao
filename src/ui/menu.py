@@ -49,69 +49,75 @@ class Menu:
     def _create_buttons(self):
         """Cria todos os botões dos menus"""
         center_x = self.width // 2
+        center_y = self.height // 2
 
         # ==================== MENU PRINCIPAL ====================
         self.buttons['main_play'] = Button(
-            center_x - 150, 250, 300, 60,
+            center_x - 150, center_y - 140, 300, 60,
             "JOGAR", self.button_font
         )
 
         self.buttons['main_level_select'] = Button(
-            center_x - 150, 330, 300, 60,
+            center_x - 150, center_y - 60, 300, 60,
             "SELECIONAR NIVEL", self.button_font
         )
 
+        self.buttons['main_training'] = Button(
+            center_x - 150, center_y + 20, 300, 60,
+            "MODO TREINO", self.button_font
+        )
+
         self.buttons['main_help'] = Button(
-            center_x - 150, 410, 300, 60,
+            center_x - 150, center_y + 100, 300, 60,
             "COMO JOGAR", self.button_font
         )
 
         self.buttons['main_quit'] = Button(
-            center_x - 150, 490, 300, 60,
+            center_x - 150, center_y + 180, 300, 60,
             "SAIR", self.button_font
         )
 
         # ==================== MENU DE PAUSA ====================
         self.buttons['pause_resume'] = Button(
-            center_x - 150, 250, 300, 60,
+            center_x - 150, center_y - 60, 300, 60,
             "CONTINUAR", self.button_font
         )
 
         self.buttons['pause_restart'] = Button(
-            center_x - 150, 330, 300, 60,
+            center_x - 150, center_y + 20, 300, 60,
             "REINICIAR NIVEL", self.button_font
         )
 
         self.buttons['pause_menu'] = Button(
-            center_x - 150, 410, 300, 60,
+            center_x - 150, center_y + 100, 300, 60,
             "MENU PRINCIPAL", self.button_font
         )
 
         # ==================== MENU DE VITÓRIA ====================
         self.buttons['victory_next'] = Button(
-            center_x - 150, 350, 300, 60,
+            center_x - 150, center_y + 40, 300, 60,
             "PROXIMO NIVEL", self.button_font
         )
 
         self.buttons['victory_menu'] = Button(
-            center_x - 150, 430, 300, 60,
+            center_x - 150, center_y + 120, 300, 60,
             "MENU PRINCIPAL", self.button_font
         )
 
         # ==================== MENU DE GAME OVER ====================
         self.buttons['gameover_restart'] = Button(
-            center_x - 150, 350, 300, 60,
+            center_x - 150, center_y + 40, 300, 60,
             "REINICIAR FASE", self.button_font
         )
 
         self.buttons['gameover_menu'] = Button(
-            center_x - 150, 430, 300, 60,
+            center_x - 150, center_y + 120, 300, 60,
             "MENU PRINCIPAL", self.button_font
         )
 
         # ==================== MENU DE AJUDA ====================
         self.buttons['help_back'] = Button(
-            center_x - 150, 600, 300, 60,
+            center_x - 150, self.height - 100, 300, 60,
             "VOLTAR", self.button_font
         )
 
@@ -148,6 +154,8 @@ class Menu:
                 return 'start_game'
             if self.buttons['main_level_select'].update(mouse_pos, mouse_pressed):
                 self.state = MenuState.LEVEL_SELECT
+            if self.buttons['main_training'].update(mouse_pos, mouse_pressed):
+                return 'start_training'
             if self.buttons['main_help'].update(mouse_pos, mouse_pressed):
                 self.state = MenuState.HELP
             if self.buttons['main_quit'].update(mouse_pos, mouse_pressed):
@@ -213,24 +221,25 @@ class Menu:
         """Desenha menu principal"""
         # Título
         title = self.title_font.render("MATHSHAPE QUEST", True, self.title_color)
-        title_rect = title.get_rect(center=(self.width // 2, 120))
+        title_rect = title.get_rect(center=(self.width // 2, self.height // 2 - 280))
         surface.blit(title, title_rect)
 
         # Subtítulo
         subtitle = self.text_font.render("Aventura das Formas Geometricas", True, self.text_color)
-        subtitle_rect = subtitle.get_rect(center=(self.width // 2, 180))
+        subtitle_rect = subtitle.get_rect(center=(self.width // 2, self.height // 2 - 220))
         surface.blit(subtitle, subtitle_rect)
 
         # Botões
         self.buttons['main_play'].draw(surface)
         self.buttons['main_level_select'].draw(surface)
+        self.buttons['main_training'].draw(surface)
         self.buttons['main_help'].draw(surface)
         self.buttons['main_quit'].draw(surface)
 
     def _draw_pause_menu(self, surface):
         """Desenha menu de pausa"""
         title = self.title_font.render("PAUSADO", True, self.title_color)
-        title_rect = title.get_rect(center=(self.width // 2, 120))
+        title_rect = title.get_rect(center=(self.width // 2, self.height // 2 - 200))
         surface.blit(title, title_rect)
 
         self.buttons['pause_resume'].draw(surface)
@@ -240,11 +249,11 @@ class Menu:
     def _draw_victory_menu(self, surface):
         """Desenha menu de vitória"""
         title = self.title_font.render("NIVEL COMPLETO!", True, (100, 255, 100))
-        title_rect = title.get_rect(center=(self.width // 2, 150))
+        title_rect = title.get_rect(center=(self.width // 2, self.height // 2 - 140))
         surface.blit(title, title_rect)
 
         subtitle = self.text_font.render("Parabens! Voce dominou as transformacoes!", True, self.text_color)
-        subtitle_rect = subtitle.get_rect(center=(self.width // 2, 250))
+        subtitle_rect = subtitle.get_rect(center=(self.width // 2, self.height // 2 - 60))
         surface.blit(subtitle, subtitle_rect)
 
         self.buttons['victory_next'].draw(surface)
@@ -253,11 +262,11 @@ class Menu:
     def _draw_gameover_menu(self, surface):
         """Desenha menu de game over"""
         title = self.title_font.render("GAME OVER", True, (255, 100, 100))
-        title_rect = title.get_rect(center=(self.width // 2, 150))
+        title_rect = title.get_rect(center=(self.width // 2, self.height // 2 - 140))
         surface.blit(title, title_rect)
 
         subtitle = self.text_font.render("Nao desista! Tente novamente!", True, self.text_color)
-        subtitle_rect = subtitle.get_rect(center=(self.width // 2, 250))
+        subtitle_rect = subtitle.get_rect(center=(self.width // 2, self.height // 2 - 60))
         surface.blit(subtitle, subtitle_rect)
 
         self.buttons['gameover_restart'].draw(surface)
