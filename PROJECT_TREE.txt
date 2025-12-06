@@ -1,0 +1,161 @@
+ESTRUTURA DO PROJETO - MathShape Quest
+================================================================================
+
+Projeto_computacao_grafica/
+│
+├── 📄 Arquivos de Configuração
+│   ├── .gitignore                  # Arquivos ignorados pelo Git
+│   ├── setup.py                    # Instalação do pacote
+│   ├── pyproject.toml              # Configuração moderna
+│   ├── Makefile                    # Comandos úteis (Linux/Mac)
+│   ├── requirements.txt            # Dependências
+│   ├── run.bat                     # Execução (Windows)
+│   └── run.sh                      # Execução (Linux/Mac)
+│
+├── 📚 Documentação
+│   ├── README.md                   # Documentação principal
+│   ├── CHANGELOG.md                # Histórico de versões
+│   ├── REORGANIZATION_SUMMARY.md   # Resumo da reorganização
+│   ├── INSTALL.md                  # Instruções de instalação
+│   └── PROJETO_COMPLETO.md         # Documentação completa
+│
+├── 📂 src/                         # Código fonte principal
+│   ├── main.py                     # Ponto de entrada
+│   ├── game.py                     # Loop principal do jogo
+│   ├── __init__.py
+│   │
+│   ├── 🔧 core/                    # Núcleo do sistema
+│   │   ├── __init__.py
+│   │   ├── config.py               # Configurações do jogo
+│   │   ├── constants.py            # Constantes globais
+│   │   └── exceptions.py           # Exceções personalizadas
+│   │
+│   ├── 🛠️ utils/                   # Utilitários
+│   │   ├── __init__.py
+│   │   ├── math_utils.py           # Funções matemáticas
+│   │   ├── color_utils.py          # Manipulação de cores
+│   │   ├── time_utils.py           # Timer e FPS counter
+│   │   └── validators.py           # Validações
+│   │
+│   ├── 🔄 transformations/         # Transformações geométricas
+│   │   ├── __init__.py
+│   │   ├── matrix.py               # Matrizes 4x4
+│   │   └── geometric.py            # Transformações 3D
+│   │
+│   ├── 📦 objects/                 # Objetos 3D
+│   │   ├── __init__.py
+│   │   ├── shape3d.py              # Classe base
+│   │   └── primitives.py           # Cubo, Esfera, etc
+│   │
+│   ├── 🎨 rendering/               # Sistema de renderização
+│   │   ├── __init__.py
+│   │   ├── renderer.py             # Engine de renderização
+│   │   ├── camera.py               # Sistema de câmera
+│   │   └── lighting.py             # Modelos de iluminação
+│   │
+│   ├── 🎮 game_logic/              # Lógica do jogo
+│   │   ├── __init__.py
+│   │   ├── player.py               # Sistema de jogador
+│   │   ├── puzzle.py               # Sistema de puzzles
+│   │   └── level.py                # Sistema de níveis
+│   │
+│   └── 🖼️ ui/                      # Interface do usuário
+│       ├── __init__.py
+│       ├── button.py               # Botões interativos
+│       ├── menu.py                 # Menus do jogo
+│       └── hud.py                  # HUD (Head-Up Display)
+│
+├── 🧪 tests/                       # Suite de testes
+│   ├── __init__.py
+│   ├── conftest.py                 # Configuração do pytest
+│   ├── unit/                       # Testes unitários
+│   │   ├── __init__.py
+│   │   ├── test_math_utils.py
+│   │   └── test_color_utils.py
+│   └── integration/                # Testes de integração
+│       ├── __init__.py
+│       └── test_transformations.py
+│
+├── 📖 docs/                        # Documentação detalhada
+│   ├── ARCHITECTURE.md             # Arquitetura do sistema
+│   ├── CONTRIBUTING.md             # Guia de contribuição
+│   ├── PROJECT_STRUCTURE.md        # Guia da estrutura
+│   └── api/                        # Documentação da API
+│       └── (vazio - para futuro)
+│
+├── 🎨 assets/                      # Recursos do jogo
+│   ├── README.md                   # Guia de assets
+│   ├── fonts/                      # Fontes TTF/OTF
+│   ├── sounds/                     # Efeitos sonoros
+│   └── textures/                   # Texturas e imagens
+│
+├── 🔨 scripts/                     # Scripts auxiliares
+│   ├── run_tests.py                # Executor de testes
+│   └── check_code_quality.py       # Verificador de qualidade
+│
+└── 📝 test_modules.py              # Teste rápido dos módulos
+
+================================================================================
+ESTATÍSTICAS DO PROJETO
+================================================================================
+
+📦 Módulos Principais:           8 (core, utils, transformations, objects,
+                                    rendering, game_logic, ui, tests)
+
+🔧 Arquivos de Código Python:    ~25 arquivos
+📚 Arquivos de Documentação:     ~10 arquivos
+🧪 Arquivos de Teste:            ~5 arquivos
+⚙️ Arquivos de Configuração:     7 arquivos
+
+🎯 Total de Linhas de Código:    ~5000+ linhas
+📖 Linhas de Documentação:       ~3000+ linhas
+🧪 Cobertura de Testes:          Em progresso (objetivo: 80%)
+
+================================================================================
+COMANDOS RÁPIDOS
+================================================================================
+
+▶️  Executar o jogo:
+    python src/main.py
+
+🧪 Executar testes:
+    python test_modules.py
+
+📦 Instalar dependências:
+    pip install -r requirements.txt
+
+🛠️ Instalar modo desenvolvedor:
+    pip install -e .
+
+🧹 Limpar arquivos temporários:
+    find . -name "__pycache__" -type d -exec rm -rf {} +
+
+================================================================================
+CARACTERÍSTICAS PRINCIPAIS
+================================================================================
+
+✅ Estrutura modular e organizada
+✅ Separação clara de responsabilidades
+✅ Testes automatizados organizados
+✅ Documentação completa e profissional
+✅ Configuração moderna (pyproject.toml)
+✅ Utilitários reutilizáveis
+✅ Exceções personalizadas
+✅ Type hints em funções principais
+✅ Compatível com imports relativos e absolutos
+✅ Suporte UTF-8 no Windows
+
+================================================================================
+TECNOLOGIAS UTILIZADAS
+================================================================================
+
+🐍 Python 3.8+
+🎮 Pygame 2.5.2
+🔢 NumPy 1.24.3
+🧪 Pytest (para testes)
+⚫ Black (formatação de código)
+📝 Sphinx (documentação futura)
+
+================================================================================
+
+Projeto reorganizado e pronto para desenvolvimento profissional! 🚀
