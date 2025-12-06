@@ -5,6 +5,10 @@ Implementa álgebra linear para transformações homogêneas 3D
 
 import numpy as np
 import math
+from core.exceptions import SingularMatrixException
+from core.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class Matrix4x4:
@@ -289,9 +293,25 @@ class Matrix4x4:
         return tuple(transformed[:3])
 
     def inverse(self):
-        """Retorna a matriz inversa"""
-        inv_data = np.linalg.inv(self.data)
-        return Matrix4x4(inv_data)
+        """
+        Retorna a matriz inversa
+
+        Raises:
+            SingularMatrixException: Se a matriz for singular (determinante ~= 0)
+        """
+        det = np.linalg.det(self.data)
+        if abs(det) < 1e-10:
+            logger.error(f"Tentativa de inverter matriz singular (det={det})")
+            raise SingularMatrixException(
+                f"Não é possível inverter matriz com determinante próximo de zero: {det}"
+            )
+
+        try:
+            inv_data = np.linalg.inv(self.data)
+            return Matrix4x4(inv_data)
+        except np.linalg.LinAlgError as e:
+            logger.error(f"Erro ao inverter matriz: {e}")
+            raise SingularMatrixException(f"Erro ao calcular inversa da matriz: {e}") from e
 
     def transpose(self):
         """Retorna a matriz transposta"""

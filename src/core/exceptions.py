@@ -44,6 +44,11 @@ class InvalidMatrixException(TransformationException):
     pass
 
 
+class SingularMatrixException(InvalidMatrixException):
+    """Exceção quando uma matriz é singular (determinante zero)"""
+    pass
+
+
 class PuzzleException(GameException):
     """Exceção relacionada a puzzles"""
     pass
