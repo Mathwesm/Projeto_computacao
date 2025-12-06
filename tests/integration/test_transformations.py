@@ -5,6 +5,7 @@ Testes de integração para transformações geométricas
 import pytest
 import sys
 import os
+import numpy as np
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
 
@@ -25,7 +26,7 @@ class TestTransformationsIntegration:
 
         # Verifica que a matriz foi modificada
         identity = Matrix4x4.identity()
-        assert not (transform.matrix == identity).all()
+        assert not np.array_equal(transform.matrix.data, identity.data)
 
     def test_transformation_order_matters(self):
         """Verifica que a ordem das transformações importa"""
@@ -40,7 +41,7 @@ class TestTransformationsIntegration:
         transform2.translate(5, 0, 0)
 
         # As matrizes devem ser diferentes
-        assert not (transform1.matrix == transform2.matrix).all()
+        assert not np.array_equal(transform1.matrix.data, transform2.matrix.data)
 
     def test_reset_transformation(self):
         """Testa reset das transformações"""
@@ -56,4 +57,4 @@ class TestTransformationsIntegration:
 
         # Deve voltar à identidade
         identity = Matrix4x4.identity()
-        assert (transform.matrix == identity).all()
+        assert np.array_equal(transform.matrix.data, identity.data)
