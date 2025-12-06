@@ -7,10 +7,12 @@ try:
     from .config import *
     from .constants import *
     from .exceptions import *
+    from .logger import get_logger, setup_logger
 except ImportError:
     from config import *
     from constants import *
     from exceptions import *
+    from logger import get_logger, setup_logger
 
 __all__ = [
     # Config
@@ -24,5 +26,8 @@ __all__ = [
     'EPSILON', 'PI', 'TWO_PI',
 
     # Exceptions
-    'GameException', 'RenderException', 'TransformationException'
+    'GameException', 'RenderException', 'TransformationException',
+
+    # Logger
+    'get_logger', 'setup_logger'
 ]
