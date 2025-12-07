@@ -95,11 +95,36 @@ run.bat         # Windows
 - **W**: Modelo Phong
 - **E**: Modelo Gouraud
 
+### Modo Treino (Troca de Formas)
+- **Tab / Seta Direita**: Próxima forma
+- **Seta Esquerda**: Forma anterior
+- **6**: Cubo
+- **7**: Pirâmide
+- **8**: Esfera
+- **9**: Cilindro
+- **0**: Torus
+
 ### Outras Ações
-- **H**: Mostrar dica do puzzle atual
+- **H**: Mostrar dica do puzzle atual (modo jogo)
 - **C**: Alternar painel de controles
 - **R**: Ativar/desativar rotação automática
-- **ESC**: Pausar jogo / Abrir menu
+- **F11**: Alternar tela cheia
+- **ESC**: Pausar jogo / Voltar ao menu
+
+---
+
+## 🎯 Modo Treino
+
+O **Modo Treino** é um ambiente livre para experimentar todas as transformações geométricas e modelos de iluminação sem pressão ou puzzles.
+
+**Diferença do modo normal**: Você pode trocar entre 5 formas geométricas diferentes:
+- **Cubo** (Tecla 6)
+- **Pirâmide** (Tecla 7)
+- **Esfera** (Tecla 8)
+- **Cilindro** (Tecla 9)
+- **Torus** (Tecla 0)
+
+Use **Tab/Setas** para navegar entre as formas ou pressione as teclas **6-0** para seleção direta. Todas as outras funcionalidades são idênticas ao modo de jogo normal.
 
 ---
 
