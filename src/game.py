@@ -10,12 +10,12 @@ try:
     from .core.config import *
     from .rendering import Camera, Renderer, Light, create_shading_model
     from .game_logic import Player, LevelManager
-    from .ui import Menu, MenuState, HUD
+    from .ui import Menu, MenuState, HUD, Tutorial
 except ImportError:
     from core.config import *
     from rendering import Camera, Renderer, Light, create_shading_model
     from game_logic import Player, LevelManager
-    from ui import Menu, MenuState, HUD
+    from ui import Menu, MenuState, HUD, Tutorial
 
 
 class GameState(Enum):
@@ -26,6 +26,7 @@ class GameState(Enum):
     LEVEL_COMPLETE = "level_complete"
     GAME_OVER = "game_over"  # Tela de Game Over com opções
     TRAINING = "training"  # Modo de treino livre
+    TUTORIAL = "tutorial"  # Tela de tutorial/como jogar
 
 
 class Game:
@@ -55,6 +56,7 @@ class Game:
         self.level_manager = LevelManager()
         self.menu = Menu(WINDOW_WIDTH, WINDOW_HEIGHT)
         self.hud = HUD(WINDOW_WIDTH, WINDOW_HEIGHT)
+        self.tutorial = Tutorial(WINDOW_WIDTH, WINDOW_HEIGHT)
 
         # Renderização 3D
         self.renderer = Renderer(self.window_width, self.window_height)
@@ -138,8 +140,15 @@ class Game:
             # Eventos de mouse
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:  # Botão esquerdo
-                    self.mouse_dragging = True
-                    self.last_mouse_pos = event.pos
+                    # Tutorial - processa cliques nos botões
+                    if self.state == GameState.TUTORIAL:
+                        action = self.tutorial.handle_click(event.pos)
+                        if action == 'back':
+                            self.state = GameState.MENU
+                            self.menu.state = MenuState.MAIN  # Garante que volte ao menu principal
+                    else:
+                        self.mouse_dragging = True
+                        self.last_mouse_pos = event.pos
 
             elif event.type == pygame.MOUSEBUTTONUP:
                 if event.button == 1:
@@ -291,6 +300,8 @@ class Game:
             self.update_game_over()
         elif self.state == GameState.TRAINING:
             self.update_training()
+        elif self.state == GameState.TUTORIAL:
+            pass  # Tutorial não precisa de update
 
     def update_menu(self):
         """Atualiza menu"""
@@ -303,6 +314,10 @@ class Game:
             self.start_game()
         elif action == 'start_training':
             self.start_training()
+        elif action == 'show_tutorial':
+            self.state = GameState.TUTORIAL
+            self.tutorial.current_page = 0  # Reseta para primeira página
+            self.menu.state = MenuState.MAIN  # Garante que o menu volte ao estado principal
         elif action == 'quit':
             self.running = False
         elif action and action.startswith('select_level_'):
@@ -340,6 +355,7 @@ class Game:
             self.restart_level()
         elif action == 'main_menu':
             self.state = GameState.MENU
+            self.menu.state = MenuState.MAIN  # Garante que volte ao menu principal
         elif action == 'next_level':
             self.next_level()
 
@@ -374,6 +390,8 @@ class Game:
             self.menu.draw(self.screen)  # Tela de Game Over por cima
         elif self.state == GameState.TRAINING:
             self.draw_training()
+        elif self.state == GameState.TUTORIAL:
+            self.tutorial.draw(self.screen)
 
     def draw_game(self):
         """Desenha o gameplay"""
@@ -406,13 +424,23 @@ class Game:
 
         # Desenha HUD
         current_puzzle = self.get_current_puzzle()
+        # Usa o número de ações executadas como tentativas
+        attempts_count = len(self.current_actions)
+
+        # Número de ações necessárias para o puzzle
+        required_actions = 0
+        if current_puzzle and current_puzzle.type.value == 'sequence':
+            required_actions = current_puzzle.data.get('required_actions', len(current_puzzle.solution.get('sequence', [])))
+
         self.hud.draw(
             self.screen,
             self.player,
             level,
             current_puzzle,
             shading_model,
-            self.dt
+            self.dt,
+            attempts_count,
+            required_actions
         )
 
     # ==================== AÇÕES DO JOGO ====================
@@ -568,9 +596,22 @@ class Game:
                 if actual_sequence == expected_sequence:
                     # Sequência correta!
                     is_correct, feedback = puzzle.check_solution({})
-                    points = puzzle.get_reward_points()
-                    self.player.add_score(points)
-                    self.hud.show_message(f"Perfeito! +{points} pontos!", SUCCESS_COLOR, 2.0)
+
+                    # Calcula pontos com base no número de tentativas
+                    base_points = puzzle.get_reward_points()
+                    total_attempts = len(self.current_actions)
+
+                    # Se fez no mínimo de tentativas, ganha 100% dos pontos
+                    # Cada tentativa extra acima do mínimo reduz 10% dos pontos
+                    extra_attempts = total_attempts - required_actions
+                    penalty_percentage = extra_attempts * 10  # 10% por tentativa extra
+                    penalty_percentage = min(penalty_percentage, 90)  # Máximo de 90% de penalidade (sempre ganha pelo menos 10%)
+
+                    final_points = int(base_points * (100 - penalty_percentage) / 100)
+                    final_points = max(final_points, int(base_points * 0.1))  # Garante pelo menos 10% dos pontos
+
+                    self.player.add_score(final_points)
+                    self.hud.show_message(f"Perfeito! +{final_points} pontos!", SUCCESS_COLOR, 2.0)
 
                     # Marca objetivos como completos
                     for objective in level.objectives:
@@ -585,7 +626,7 @@ class Game:
                 else:
                     # Sequência errada!
                     self.handle_wrong_attempt()
-                    self.current_actions = []  # Reseta para tentar novamente
+                    # Não reseta current_actions aqui - deixa acumular até perder vida
 
         # Para puzzles de transformação - marca como completo automaticamente após aplicar
         elif puzzle.type.value == 'transformation' and not puzzle.is_solved():
@@ -643,8 +684,8 @@ class Game:
                 # Ainda tem vidas - mostra mensagem e reseta tentativas
                 self.hud.show_message(f"Sequencia errada! Perdeu 1 vida! Vidas restantes: {self.player.lives}", ERROR_COLOR, 3.0)
                 self.wrong_attempts = 0  # Reseta tentativas para nova chance
-        else:
-            self.hud.show_message(f"Sequencia errada! Tentativas restantes: {remaining}", WARNING_COLOR, 2.0)
+                # Não reseta current_actions - mantém a contagem acumulada
+        # Removido: else que mostrava mensagem a cada tentativa errada
 
     def game_over(self):
         """Game Over - Mostra tela de Game Over com opções"""
@@ -790,7 +831,9 @@ class Game:
             training_level,
             None,  # Sem puzzle
             self.shading_models[self.current_shading],
-            self.dt
+            self.dt,
+            0,  # Sem tentativas erradas no modo treino
+            self.max_wrong_attempts
         )
 
     def next_shape(self):

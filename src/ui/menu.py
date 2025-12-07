@@ -31,6 +31,8 @@ class Menu:
         self.width = width
         self.height = height
         self.state = MenuState.MAIN
+        self.previous_state = MenuState.MAIN  # Rastreia o estado anterior
+        self.state_changed_this_frame = False  # Flag para evitar duplo clique
 
         # Fontes
         self.title_font = pygame.font.Font(None, 72)
@@ -149,6 +151,11 @@ class Menu:
         Returns:
             Ação do menu (string) ou None
         """
+        # Se o estado mudou neste frame, não processa botões (evita duplo clique)
+        if self.state != self.previous_state:
+            self.previous_state = self.state
+            return None
+
         if self.state == MenuState.MAIN:
             if self.buttons['main_play'].update(mouse_pos, mouse_pressed):
                 return 'start_game'
@@ -157,7 +164,7 @@ class Menu:
             if self.buttons['main_training'].update(mouse_pos, mouse_pressed):
                 return 'start_training'
             if self.buttons['main_help'].update(mouse_pos, mouse_pressed):
-                self.state = MenuState.HELP
+                return 'show_tutorial'
             if self.buttons['main_quit'].update(mouse_pos, mouse_pressed):
                 return 'quit'
 
@@ -167,21 +174,18 @@ class Menu:
             if self.buttons['pause_restart'].update(mouse_pos, mouse_pressed):
                 return 'restart'
             if self.buttons['pause_menu'].update(mouse_pos, mouse_pressed):
-                self.state = MenuState.MAIN
                 return 'main_menu'
 
         elif self.state == MenuState.VICTORY:
             if self.buttons['victory_next'].update(mouse_pos, mouse_pressed):
                 return 'next_level'
             if self.buttons['victory_menu'].update(mouse_pos, mouse_pressed):
-                self.state = MenuState.MAIN
                 return 'main_menu'
 
         elif self.state == MenuState.GAME_OVER:
             if self.buttons['gameover_restart'].update(mouse_pos, mouse_pressed):
                 return 'restart_level'
             if self.buttons['gameover_menu'].update(mouse_pos, mouse_pressed):
-                self.state = MenuState.MAIN
                 return 'main_menu'
 
         elif self.state == MenuState.HELP:

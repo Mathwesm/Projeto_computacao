@@ -32,6 +32,15 @@ class HUD:
         self.success_color = (100, 255, 100)
         self.error_color = (255, 100, 100)
 
+        # Imagens
+        self.heart_image = pygame.image.load("assets/img/imgcoração.png")
+        # Redimensionar o coração para um tamanho adequado (30x30 pixels)
+        self.heart_image = pygame.transform.scale(self.heart_image, (30, 30))
+
+        # Coração vazio
+        self.heart_empty_image = pygame.image.load("assets/img/imgcoraçãovazio.png")
+        self.heart_empty_image = pygame.transform.scale(self.heart_empty_image, (30, 30))
+
         # Estado
         self.show_controls = True
         self.show_puzzle_info = True
@@ -42,7 +51,7 @@ class HUD:
         self.temp_message_time = 0
         self.temp_message_duration = 3.0  # segundos
 
-    def draw(self, surface, player, level, current_puzzle, shading_model, dt):
+    def draw(self, surface, player, level, current_puzzle, shading_model, dt, wrong_attempts=0, max_wrong_attempts=5):
         """
         Desenha o HUD
         Args:
@@ -52,6 +61,8 @@ class HUD:
             current_puzzle: Puzzle atual (ou None)
             shading_model: Modelo de iluminação atual
             dt: Delta time
+            wrong_attempts: Número de tentativas erradas
+            max_wrong_attempts: Número máximo de tentativas erradas
         """
         # Atualiza mensagem temporária
         if self.temp_message:
@@ -65,7 +76,7 @@ class HUD:
 
         # Painel lateral (informações do puzzle)
         if self.show_puzzle_info and current_puzzle:
-            self._draw_puzzle_panel(surface, current_puzzle)
+            self._draw_puzzle_panel(surface, current_puzzle, wrong_attempts, max_wrong_attempts)
 
         # Painel de controles
         if self.show_controls:
@@ -92,9 +103,23 @@ class HUD:
         score_text = self.title_font.render(f"Score: {player.score}", True, self.highlight_color)
         panel.blit(score_text, (20, 15))
 
-        # Vidas
-        lives_text = self.title_font.render(f"Vidas: {'♥' * player.lives}", True, self.error_color)
-        panel.blit(lives_text, (250, 15))
+        # Vidas (usando imagens de coração)
+        lives_label = self.title_font.render("Vidas: ", True, self.text_color)
+        panel.blit(lives_label, (250, 15))
+
+        # Desenhar corações (cheios e vazios)
+        max_lives = 3  # Número máximo de vidas
+        heart_x = 250 + lives_label.get_width() + 5
+        heart_y = 12  # Ajustar para alinhar com o texto
+
+        for i in range(max_lives):
+            if i < player.lives:
+                # Coração cheio (vida atual)
+                panel.blit(self.heart_image, (heart_x + i * 28, heart_y))
+            else:
+                # Coração vazio (vida perdida)
+                panel.blit(self.heart_empty_image, (heart_x + i * 28, heart_y))
+
 
         # Nível
         level_text = self.title_font.render(f"Nivel: {level.name}", True, self.text_color)
@@ -109,7 +134,7 @@ class HUD:
 
         surface.blit(panel, (0, 0))
 
-    def _draw_puzzle_panel(self, surface, puzzle):
+    def _draw_puzzle_panel(self, surface, puzzle, wrong_attempts, max_wrong_attempts):
         """Desenha painel lateral com informações do puzzle"""
         panel_width = 350
         panel_height = 250
@@ -139,9 +164,9 @@ class HUD:
         description = puzzle.get_description()
         self._draw_wrapped_text(panel, description, (10, 110), panel_width - 20, self.small_font, self.text_color)
 
-        # Tentativas
+        # Tentativas (usa wrong_attempts ao invés de puzzle.attempts)
         attempts_text = self.small_font.render(
-            f"Tentativas: {puzzle.attempts}/{puzzle.max_attempts}",
+            f"Tentativas: {wrong_attempts}/{max_wrong_attempts}",
             True, self.text_color
         )
         panel.blit(attempts_text, (10, 200))
