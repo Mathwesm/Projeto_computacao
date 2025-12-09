@@ -51,7 +51,7 @@ class HUD:
         self.temp_message_time = 0
         self.temp_message_duration = 3.0  # segundos
 
-    def draw(self, surface, player, level, current_puzzle, shading_model, dt, wrong_attempts=0, max_wrong_attempts=5):
+    def draw(self, surface, player, level, current_puzzle, shading_model, dt, wrong_attempts=0, max_wrong_attempts=5, is_training_mode=False):
         """
         Desenha o HUD
         Args:
@@ -63,6 +63,7 @@ class HUD:
             dt: Delta time
             wrong_attempts: Número de tentativas erradas
             max_wrong_attempts: Número máximo de tentativas erradas
+            is_training_mode: Se está no modo treino (não mostra vidas/pontuação)
         """
         # Atualiza mensagem temporária
         if self.temp_message:
@@ -72,7 +73,7 @@ class HUD:
 
         # Painel superior (stats)
         if self.show_stats:
-            self._draw_top_panel(surface, player, level)
+            self._draw_top_panel(surface, player, level, is_training_mode)
 
         # Painel lateral (informações do puzzle)
         if self.show_puzzle_info and current_puzzle:
@@ -89,7 +90,7 @@ class HUD:
         if self.temp_message:
             self._draw_temp_message(surface)
 
-    def _draw_top_panel(self, surface, player, level):
+    def _draw_top_panel(self, surface, player, level, is_training_mode=False):
         """Desenha painel superior com estatísticas"""
         panel_height = 60
         panel = pygame.Surface((self.width, panel_height))
@@ -99,38 +100,45 @@ class HUD:
         # Borda
         pygame.draw.rect(panel, self.border_color, (0, 0, self.width, panel_height), 2)
 
-        # Score
-        score_text = self.title_font.render(f"Score: {player.score}", True, self.highlight_color)
-        panel.blit(score_text, (20, 15))
+        # No modo treino, não mostra score nem vidas
+        if not is_training_mode:
+            # Score
+            score_text = self.title_font.render(f"Score: {player.score}", True, self.highlight_color)
+            panel.blit(score_text, (20, 15))
 
-        # Vidas (usando imagens de coração)
-        lives_label = self.title_font.render("Vidas: ", True, self.text_color)
-        panel.blit(lives_label, (250, 15))
+            # Vidas (usando imagens de coração)
+            lives_label = self.title_font.render("Vidas: ", True, self.text_color)
+            panel.blit(lives_label, (250, 15))
 
-        # Desenhar corações (cheios e vazios)
-        max_lives = 3  # Número máximo de vidas
-        heart_x = 250 + lives_label.get_width() + 5
-        heart_y = 12  # Ajustar para alinhar com o texto
+            # Desenhar corações (cheios e vazios)
+            max_lives = 3  # Número máximo de vidas
+            heart_x = 250 + lives_label.get_width() + 5
+            heart_y = 12  # Ajustar para alinhar com o texto
 
-        for i in range(max_lives):
-            if i < player.lives:
-                # Coração cheio (vida atual)
-                panel.blit(self.heart_image, (heart_x + i * 28, heart_y))
-            else:
-                # Coração vazio (vida perdida)
-                panel.blit(self.heart_empty_image, (heart_x + i * 28, heart_y))
+            for i in range(max_lives):
+                if i < player.lives:
+                    # Coração cheio (vida atual)
+                    panel.blit(self.heart_image, (heart_x + i * 28, heart_y))
+                else:
+                    # Coração vazio (vida perdida)
+                    panel.blit(self.heart_empty_image, (heart_x + i * 28, heart_y))
 
-
-        # Nível
+        # Nível (sempre mostra)
         level_text = self.title_font.render(f"Nivel: {level.name}", True, self.text_color)
         level_rect = level_text.get_rect(center=(self.width // 2, panel_height // 2))
         panel.blit(level_text, level_rect)
 
-        # Progresso do nível
-        progress = level.get_progress()
-        progress_text = self.text_font.render(f"Progresso: {int(progress * 100)}%", True, self.success_color)
-        progress_rect = progress_text.get_rect(right=self.width - 20, centery=panel_height // 2)
-        panel.blit(progress_text, progress_rect)
+        # No modo treino, mostra uma mensagem diferente no lugar do progresso
+        if is_training_mode:
+            training_text = self.text_font.render("MODO TREINO - Pratique livremente!", True, self.success_color)
+            training_rect = training_text.get_rect(right=self.width - 20, centery=panel_height // 2)
+            panel.blit(training_text, training_rect)
+        else:
+            # Progresso do nível
+            progress = level.get_progress()
+            progress_text = self.text_font.render(f"Progresso: {int(progress * 100)}%", True, self.success_color)
+            progress_rect = progress_text.get_rect(right=self.width - 20, centery=panel_height // 2)
+            panel.blit(progress_text, progress_rect)
 
         surface.blit(panel, (0, 0))
 
