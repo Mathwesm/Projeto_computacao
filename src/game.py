@@ -146,6 +146,12 @@ class Game:
                         if action == 'back':
                             self.state = GameState.MENU
                             self.menu.state = MenuState.MAIN  # Garante que volte ao menu principal
+                        elif action == 'start_training':
+                            # Inicia modo treino direto do tutorial
+                            self.start_training()
+                        elif action == 'start_game':
+                            # Inicia o jogo na fase 1 direto do tutorial
+                            self.start_game()
                     else:
                         self.mouse_dragging = True
                         self.last_mouse_pos = event.pos
@@ -305,6 +311,9 @@ class Game:
 
     def update_menu(self):
         """Atualiza menu"""
+        # Atualiza quais níveis estão desbloqueados antes de processar cliques
+        self.menu.update_unlocked_levels(self.player)
+
         mouse_pos = pygame.mouse.get_pos()
         mouse_pressed = pygame.mouse.get_pressed()
 
@@ -375,6 +384,17 @@ class Game:
             self.player.reset()
             self.level_manager.current_level_index = 0
             self.state = GameState.MENU
+            self.menu.state = MenuState.MAIN  # Garante que volte ao menu principal
+        elif action == 'start_training':
+            # Reseta vidas e vai para o modo treino
+            self.player.lives = 3
+            self.start_training()
+        elif action == 'show_tutorial':
+            # Reseta vidas e abre o tutorial
+            self.player.lives = 3
+            self.state = GameState.TUTORIAL
+            self.tutorial.current_page = 0  # Começa do início
+            self.menu.state = MenuState.MAIN  # Garante que volte ao menu principal depois
 
     def draw(self):
         """Desenha tudo"""
@@ -451,6 +471,11 @@ class Game:
         self.level_manager.goto_level(level_index)
         self.player.current_level = level_index
         self.current_puzzle_index = 0
+
+        # IMPORTANTE: Reseta o nível ao iniciar (volta ao estado inicial)
+        level = self.level_manager.get_current_level()
+        if level:
+            level.reset()
 
         # Reseta tentativas
         self.wrong_attempts = 0
@@ -593,7 +618,15 @@ class Game:
                 expected_sequence = [step['type'] for step in puzzle.solution.get('sequence', [])]
                 actual_sequence = self.current_actions[-required_actions:]
 
-                if actual_sequence == expected_sequence:
+                # Normaliza as ações para comparação (scale_up/scale_down -> scale)
+                def normalize_action(action):
+                    if action in ['scale_up', 'scale_down']:
+                        return 'scale'
+                    return action
+
+                normalized_actual = [normalize_action(a) for a in actual_sequence]
+
+                if normalized_actual == expected_sequence:
                     # Sequência correta!
                     is_correct, feedback = puzzle.check_solution({})
 
@@ -833,7 +866,8 @@ class Game:
             self.shading_models[self.current_shading],
             self.dt,
             0,  # Sem tentativas erradas no modo treino
-            self.max_wrong_attempts
+            self.max_wrong_attempts,
+            is_training_mode=True  # Indica que é modo treino (sem vidas/pontuação)
         )
 
     def next_shape(self):

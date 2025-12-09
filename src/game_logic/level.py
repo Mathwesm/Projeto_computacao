@@ -87,6 +87,10 @@ class Level:
             puzzle.solved = False
             puzzle.attempts = 0
 
+        # IMPORTANTE: Reseta as transformações de todos os shapes (volta ao estado inicial)
+        for shape in self.shapes:
+            shape.reset_transformations()
+
 
 class LevelManager:
     """Gerenciador de níveis do jogo"""

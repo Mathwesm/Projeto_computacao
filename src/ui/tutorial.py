@@ -36,13 +36,23 @@ class Tutorial:
 
         # Página atual do tutorial
         self.current_page = 0
-        self.total_pages = 9  # Introdução + 5 transformações + 3 modelos de iluminação
+        self.total_pages = 10  # Introdução + 5 transformações + 3 modelos de iluminação + página final
 
-        # Botão voltar
+        # Botões de navegação
         self.back_button_rect = pygame.Rect(50, height - 80, 150, 50)
         self.next_button_rect = pygame.Rect(width - 200, height - 80, 150, 50)
         self.prev_button_rect = pygame.Rect(width // 2 - 100, height - 80, 80, 50)
         self.next_page_rect = pygame.Rect(width // 2 + 20, height - 80, 80, 50)
+
+        # Botões da página final (lado direito, um em cima do outro)
+        button_x = width - 450  # Mais para a esquerda
+        button_width = 320
+        button_height = 70
+        button_spacing = 40  # Espaçamento maior entre os botões
+        start_y = height // 2 - 80  # Mais alto na tela
+
+        self.training_mode_button = pygame.Rect(button_x, start_y, button_width, button_height)
+        self.start_game_button = pygame.Rect(button_x, start_y + button_height + button_spacing, button_width, button_height)
 
         # Retângulo do link do vídeo (será definido durante o draw)
         self.video_link_rect = None
@@ -202,6 +212,27 @@ class Tutorial:
                 ],
                 'image_path': 'assets/img/Iluminação Gouraud.jpeg',
                 'video_url': 'https://www.youtube.com/watch?v=A8wquHMK4wE'
+            },
+            9: {
+                'title': 'PARABÉNS!',
+                'subtitle': 'Você completou o tutorial',
+                'description': [
+                    'Ótimo! Agora com o tutorial você está pronto para começar o jogo!',
+                    '',
+                    'Você aprendeu sobre:',
+                    '  ✓ Transformações Geométricas (Translação, Rotação, Escala, Reflexão, Distorção)',
+                    '  ✓ Modelos de Iluminação (Lambertiano, Phong, Gouraud)',
+                    '',
+                    'Escolha como deseja começar:',
+                    '',
+                    '• MODO TREINO: Pratique livremente com todas as transformações',
+                    '  sem pressão, ideal para experimentar e se familiarizar',
+                    '',
+                    '• INICIAR JOGO: Comece a aventura resolvendo puzzles',
+                    '  e aplicando o que aprendeu!',
+                ],
+                'image_path': None,
+                'video_url': None
             }
         }
 
@@ -211,8 +242,16 @@ class Tutorial:
         Args:
             pos: Posição do mouse (x, y)
         Returns:
-            Ação a ser executada ('back', 'next', 'prev', None)
+            Ação a ser executada ('back', 'start_training', 'start_game', None)
         """
+        # Se estamos na página final, verifica os botões especiais
+        if self.current_page == self.total_pages - 1:
+            if self.training_mode_button.collidepoint(pos):
+                return 'start_training'
+            elif self.start_game_button.collidepoint(pos):
+                return 'start_game'
+
+        # Botões normais de navegação
         if self.back_button_rect.collidepoint(pos):
             return 'back'
         elif self.next_page_rect.collidepoint(pos) and self.current_page < self.total_pages - 1:
@@ -336,14 +375,24 @@ class Tutorial:
 
         surface.blit(panel, (panel_x, panel_y))
 
-        # Botões
-        self._draw_button(surface, self.back_button_rect, "VOLTAR", self.title_color)
-
-        if self.current_page > 0:
-            self._draw_button(surface, self.prev_button_rect, "< Ant", self.text_color)
-
+        # Botões de navegação normais
         if self.current_page < self.total_pages - 1:
+            # Páginas normais - mostra botão voltar e navegação
+            self._draw_button(surface, self.back_button_rect, "VOLTAR", self.title_color)
+
+            if self.current_page > 0:
+                self._draw_button(surface, self.prev_button_rect, "< Ant", self.text_color)
+
             self._draw_button(surface, self.next_page_rect, "Prox >", self.text_color)
+        else:
+            # Página final - mostra botões especiais
+            self._draw_button(surface, self.back_button_rect, "VOLTAR", self.title_color)
+
+            # Botão Modo Treino
+            self._draw_special_button(surface, self.training_mode_button, "MODO TREINO", (100, 150, 255))
+
+            # Botão Iniciar Jogo
+            self._draw_special_button(surface, self.start_game_button, "INICIAR JOGO", (100, 255, 150))
 
     def _draw_button(self, surface, rect, text, color):
         """Desenha um botão"""
@@ -357,5 +406,33 @@ class Tutorial:
 
         # Texto do botão
         text_surface = self.text_font.render(text, True, color)
+        text_rect = text_surface.get_rect(center=rect.center)
+        surface.blit(text_surface, text_rect)
+
+    def _draw_special_button(self, surface, rect, text, base_color):
+        """Desenha um botão especial maior e mais destacado"""
+        mouse_pos = pygame.mouse.get_pos()
+        is_hover = rect.collidepoint(mouse_pos)
+
+        # Efeito de brilho no hover
+        if is_hover:
+            button_color = tuple(min(255, c + 30) for c in base_color)
+            border_width = 4
+        else:
+            button_color = base_color
+            border_width = 3
+
+        # Desenha sombra
+        shadow_rect = rect.copy()
+        shadow_rect.x += 5
+        shadow_rect.y += 5
+        pygame.draw.rect(surface, (0, 0, 0, 100), shadow_rect, border_radius=10)
+
+        # Fundo do botão com cantos arredondados
+        pygame.draw.rect(surface, button_color, rect, border_radius=10)
+        pygame.draw.rect(surface, (255, 255, 255), rect, border_width, border_radius=10)
+
+        # Texto do botão com fonte maior
+        text_surface = self.subtitle_font.render(text, True, (255, 255, 255))
         text_rect = text_surface.get_rect(center=rect.center)
         surface.blit(text_surface, text_rect)

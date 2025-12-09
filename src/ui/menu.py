@@ -32,7 +32,10 @@ class Menu:
         self.height = height
         self.state = MenuState.MAIN
         self.previous_state = MenuState.MAIN  # Rastreia o estado anterior
-        self.state_changed_this_frame = False  # Flag para evitar duplo clique
+        self.wait_for_mouse_release = False  # Espera usuário soltar mouse após mudança de estado
+
+        # Sistema de desbloqueio de níveis
+        self.unlocked_levels = [0]  # Nível 0 (primeiro nível) sempre desbloqueado
 
         # Fontes
         self.title_font = pygame.font.Font(None, 72)
@@ -108,13 +111,23 @@ class Menu:
 
         # ==================== MENU DE GAME OVER ====================
         self.buttons['gameover_restart'] = Button(
-            center_x - 150, center_y + 40, 300, 60,
+            center_x - 150, center_y - 20, 300, 60,
             "REINICIAR FASE", self.button_font
         )
 
         self.buttons['gameover_menu'] = Button(
-            center_x - 150, center_y + 120, 300, 60,
+            center_x - 150, center_y + 60, 300, 60,
             "MENU PRINCIPAL", self.button_font
+        )
+
+        self.buttons['gameover_training'] = Button(
+            center_x - 150, center_y + 140, 300, 60,
+            "MODO TREINO", self.button_font
+        )
+
+        self.buttons['gameover_tutorial'] = Button(
+            center_x - 150, center_y + 220, 300, 60,
+            "COMO JOGAR", self.button_font
         )
 
         # ==================== MENU DE AJUDA ====================
@@ -154,7 +167,14 @@ class Menu:
         # Se o estado mudou neste frame, não processa botões (evita duplo clique)
         if self.state != self.previous_state:
             self.previous_state = self.state
+            self.wait_for_mouse_release = True  # Ativa flag para esperar soltar mouse
             return None
+
+        # Se estamos esperando o usuário soltar o mouse
+        if self.wait_for_mouse_release:
+            if not mouse_pressed[0]:  # Mouse foi solto
+                self.wait_for_mouse_release = False
+            return None  # Não processa cliques até soltar
 
         if self.state == MenuState.MAIN:
             if self.buttons['main_play'].update(mouse_pos, mouse_pressed):
@@ -187,6 +207,10 @@ class Menu:
                 return 'restart_level'
             if self.buttons['gameover_menu'].update(mouse_pos, mouse_pressed):
                 return 'main_menu'
+            if self.buttons['gameover_training'].update(mouse_pos, mouse_pressed):
+                return 'start_training'
+            if self.buttons['gameover_tutorial'].update(mouse_pos, mouse_pressed):
+                return 'show_tutorial'
 
         elif self.state == MenuState.HELP:
             if self.buttons['help_back'].update(mouse_pos, mouse_pressed):
@@ -266,15 +290,21 @@ class Menu:
     def _draw_gameover_menu(self, surface):
         """Desenha menu de game over"""
         title = self.title_font.render("GAME OVER", True, (255, 100, 100))
-        title_rect = title.get_rect(center=(self.width // 2, self.height // 2 - 140))
+        title_rect = title.get_rect(center=(self.width // 2, self.height // 2 - 200))
         surface.blit(title, title_rect)
 
         subtitle = self.text_font.render("Nao desista! Tente novamente!", True, self.text_color)
-        subtitle_rect = subtitle.get_rect(center=(self.width // 2, self.height // 2 - 60))
+        subtitle_rect = subtitle.get_rect(center=(self.width // 2, self.height // 2 - 120))
         surface.blit(subtitle, subtitle_rect)
+
+        help_text = self.text_font.render("Precisa de ajuda? Experimente o Modo Treino ou revise o tutorial!", True, (200, 200, 255))
+        help_rect = help_text.get_rect(center=(self.width // 2, self.height // 2 - 70))
+        surface.blit(help_text, help_rect)
 
         self.buttons['gameover_restart'].draw(surface)
         self.buttons['gameover_menu'].draw(surface)
+        self.buttons['gameover_training'].draw(surface)
+        self.buttons['gameover_tutorial'].draw(surface)
 
     def _draw_help_menu(self, surface):
         """Desenha menu de ajuda"""
@@ -321,8 +351,53 @@ class Menu:
         for i in range(10):
             self.buttons[f'level_{i+1}'].draw(surface)
 
+            # Se o nível está bloqueado, desenha um cadeado em cima
+            if i not in self.unlocked_levels:
+                button = self.buttons[f'level_{i+1}']
+                # Desenha um símbolo de cadeado
+                lock_font = pygame.font.Font(None, 48)
+                lock_text = lock_font.render("🔒", True, (200, 200, 200))
+                lock_rect = lock_text.get_rect(center=button.rect.center)
+                surface.blit(lock_text, lock_rect)
+
         self.buttons['levelselect_back'].draw(surface)
 
     def set_state(self, state):
         """Define o estado do menu"""
+        self.previous_state = self.state  # Atualiza estado anterior
         self.state = state
+        self.wait_for_mouse_release = True  # Espera soltar mouse após mudança externa
+        # Reseta o estado de todos os botões para evitar cliques fantasmas
+        for button in self.buttons.values():
+            button.is_pressed = False
+            button.is_hovered = False
+
+    def update_unlocked_levels(self, player):
+        """
+        Atualiza quais níveis estão desbloqueados baseado no progresso do jogador
+        Args:
+            player: Objeto Player com os níveis completos
+        """
+        # Converte IDs dos níveis (1, 2, 3...) para índices (0, 1, 2...)
+        # levels_completed contém IDs dos níveis (que começam em 1)
+        completed_indices = [level_id - 1 for level_id in player.levels_completed]
+
+        # Sempre desbloqueado: nível 0 (primeiro)
+        self.unlocked_levels = [0]
+
+        # Desbloqueia todos os níveis que o jogador completou
+        for index in completed_indices:
+            if index not in self.unlocked_levels and 0 <= index < 10:
+                self.unlocked_levels.append(index)
+
+        # Desbloqueia APENAS o próximo nível após o último completado
+        if completed_indices:
+            max_completed_index = max(completed_indices)
+            next_index = max_completed_index + 1
+            if next_index < 10 and next_index not in self.unlocked_levels:
+                self.unlocked_levels.append(next_index)
+
+        # Atualiza o estado dos botões (habilita/desabilita)
+        for i in range(10):
+            if f'level_{i+1}' in self.buttons:
+                self.buttons[f'level_{i+1}'].set_enabled(i in self.unlocked_levels)
